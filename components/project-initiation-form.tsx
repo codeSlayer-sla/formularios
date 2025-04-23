@@ -390,7 +390,7 @@ function ProjectInitiationForm() {
 
     const content = pdfContentRef.current
     const canvas = await html2canvas(content, {
-      scale: 2,
+      scale: 1.5, // Reducir la escala para comprimir
       useCORS: true,
       logging: false,
       windowWidth: content.scrollWidth,
@@ -399,11 +399,12 @@ function ProjectInitiationForm() {
       allowTaint: true,
     })
 
-    const imgData = canvas.toDataURL("image/png")
+    const imgData = canvas.toDataURL("image/jpeg", 0.7) // Usar JPEG con calidad reducida
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
       format: "a4",
+      compress: true // Habilitar compresión
     })
 
     const pageWidth = pdf.internal.pageSize.getWidth()
@@ -418,7 +419,7 @@ function ProjectInitiationForm() {
 
     pdf.addImage(
       imgData,
-      "PNG",
+      "JPEG", // Cambiar a JPEG
       10,
       10,
       imgWidth,
@@ -434,43 +435,102 @@ function ProjectInitiationForm() {
     return pdf.output("datauristring")
   }, [])
 
+  // Función para verificar si todos los campos requeridos están llenos
+  const isFormComplete = useCallback(() => {
+    const values = form.getValues()
+    return (
+      values.projectName &&
+      values.projectCode &&
+      values.startDate &&
+      values.endDate &&
+      values.projectType &&
+      values.clientName &&
+      values.clientContact &&
+      values.clientEmail &&
+      values.clientPhone &&
+      values.projectManager &&
+      values.teamMembers &&
+      values.objectives &&
+      values.scope &&
+      values.deliverables &&
+      values.solution &&
+      values.approvalName &&
+      values.approvalPosition
+    )
+  }, [form])
+
   // Modificar la función onSubmit para incluir el envío de correo
   const onSubmit = useCallback(
     async (data: FormValues) => {
+      if (!isFormComplete()) {
+        toast({
+          title: "Campos incompletos",
+          description: "Por favor complete todos los campos requeridos antes de enviar.",
+          variant: "destructive",
+        })
+        return
+      }
+
       setIsSubmitting(true)
+      console.log("Iniciando proceso de envío...")
 
       try {
         // Generar el PDF como base64
+        console.log("Generando PDF...")
         const pdfBase64 = await generatePDFBase64()
         if (!pdfBase64) {
           throw new Error("Error al generar el PDF")
         }
+        console.log("PDF generado correctamente")
 
-        // Enviar el correo con EmailJS
+        // Enviar el correo
+        console.log("Enviando correo...")
         setIsSendingEmail(true)
-        await emailjs.sendForm(
-          "service_u538176",
-          "template_njkpf1m",
-          formRef.current!,
-          "pJ8EE3o6aC3DzsJlr"
-        )
 
-        // Enviar el PDF como adjunto
+        // Preparar los datos del correo
         const emailData = {
           to_email: data.clientEmail,
           to_name: data.clientName,
           from_name: "Omicron Corp",
           message: `Se adjunta el acta de inicio del proyecto ${data.projectName}`,
           pdf_attachment: pdfBase64,
-          cc_email: "aplicaciones3@omicroncorp.com"
+          cc_email: "aplicaciones3@omicroncorp.com",
+          project_name: data.projectName,
+          project_code: data.projectCode,
+          start_date: format(data.startDate, "PPP", { locale: es }),
+          end_date: format(data.endDate, "PPP", { locale: es }),
+          project_type: data.projectType,
+          client_name: data.clientName,
+          client_contact: data.clientContact,
+          client_email: data.clientEmail,
+          client_phone: data.clientPhone,
+          project_manager: data.projectManager,
+          team_members: data.teamMembers,
+          objectives: data.objectives,
+          scope: data.scope,
+          deliverables: data.deliverables,
+          solution: data.solution,
+          approval_name: data.approvalName,
+          approval_position: data.approvalPosition
         }
 
-        await emailjs.send(
-          "service_u538176",
-          "template_njkpf1m",
-          emailData,
-          "pJ8EE3o6aC3DzsJlr"
-        )
+        console.log("Enviando datos al servidor...")
+        // Enviar el correo usando el endpoint
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailData),
+        })
+
+        const responseData = await response.json()
+
+        if (!response.ok) {
+          throw new Error(responseData.error || "Error al enviar el correo")
+        }
+
+        console.log("Correo enviado correctamente:", responseData)
 
         setIsSubmitted(true)
         toast({
@@ -479,10 +539,10 @@ function ProjectInitiationForm() {
           variant: "success",
         })
       } catch (error) {
-        console.error("Error al enviar el formulario:", error)
+        console.error("Error detallado:", error)
         toast({
           title: "Error al enviar",
-          description: "Ha ocurrido un error al enviar el formulario. Intente nuevamente.",
+          description: error instanceof Error ? error.message : "Ha ocurrido un error al enviar el formulario. Intente nuevamente.",
           variant: "destructive",
         })
       } finally {
@@ -490,7 +550,7 @@ function ProjectInitiationForm() {
         setIsSendingEmail(false)
       }
     },
-    [toast, generatePDFBase64],
+    [toast, generatePDFBase64, isFormComplete],
   )
 
   // Resetear el formulario (optimizado)
@@ -1341,7 +1401,7 @@ function ProjectInitiationForm() {
             ) : (
               <Button
                 type="submit"
-                disabled={isSubmitting || isGeneratingPdf || isSendingEmail}
+                disabled={isSubmitting || isGeneratingPdf || isSendingEmail || !isFormComplete()}
                 className="bg-red-600 hover:bg-red-700 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 {isSubmitting || isGeneratingPdf || isSendingEmail ? (
