@@ -9,7 +9,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "Acta de Inicio de Proyecto",
   description: "Formulario para la creación de actas de inicio de proyecto",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({

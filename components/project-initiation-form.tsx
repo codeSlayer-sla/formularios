@@ -25,7 +25,6 @@ import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
 import Image from "next/image"
 import dynamic from "next/dynamic"
-import emailjs from "@emailjs/browser"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -179,6 +178,7 @@ function ProjectInitiationForm() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [progress, setProgress] = useState(0)
   const [forceUpdate, setForceUpdate] = useState(0) // Estado para forzar actualización
+  const [isSubmitButtonPressed, setIsSubmitButtonPressed] = useState(false) // Nuevo estado para controlar el botón de envío
   const pdfContentRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
   const isMobile = useMobile() // Hook para detectar dispositivos móviles
@@ -459,15 +459,47 @@ function ProjectInitiationForm() {
     )
   }, [form])
 
-  // Modificar la función onSubmit para incluir el envío de correo
+  // Función para generar el código del proyecto
+  const generateProjectCode = useCallback(() => {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+    return `PRJ-${year}${month}${day}-${random}`
+  }, [])
+
+  // Efecto para generar el código del proyecto al montar el componente
+  useEffect(() => {
+    const projectCode = generateProjectCode()
+    form.setValue("projectCode", projectCode)
+  }, [form, generateProjectCode])
+
+  // Función para manejar el envío del formulario
   const onSubmit = useCallback(
     async (data: FormValues) => {
+      // Prevenir el envío automático
+      if (currentStep !== formSteps.length - 1) {
+        return
+      }
+
+      // Verificar si el formulario está completo
       if (!isFormComplete()) {
         toast({
           title: "Campos incompletos",
           description: "Por favor complete todos los campos requeridos antes de enviar.",
           variant: "destructive",
         })
+        return
+      }
+
+      // Verificar si ya está en proceso de envío
+      if (isSubmitting || isGeneratingPdf || isSendingEmail) {
+        return
+      }
+
+      // Verificar si el botón de envío ha sido presionado
+      if (!isSubmitButtonPressed) {
         return
       }
 
@@ -548,9 +580,10 @@ function ProjectInitiationForm() {
       } finally {
         setIsSubmitting(false)
         setIsSendingEmail(false)
+        setIsSubmitButtonPressed(false) // Resetear el estado del botón
       }
     },
-    [toast, generatePDFBase64, isFormComplete],
+    [toast, generatePDFBase64, isFormComplete, currentStep, isSubmitting, isGeneratingPdf, isSendingEmail, isSubmitButtonPressed],
   )
 
   // Resetear el formulario (optimizado)
@@ -592,12 +625,14 @@ function ProjectInitiationForm() {
                   id="projectCode"
                   {...form.register("projectCode")}
                   className={cn(
-                    "transition-all duration-300 focus:border-red-300 focus:ring-red-200",
+                    "transition-all duration-300 focus:border-red-300 focus:ring-red-200 bg-slate-50",
                     errors.projectCode ? "border-red-300 focus-visible:ring-red-500" : "border-slate-200",
                   )}
-                  placeholder="Ej: PRJ-2023-001"
+                  readOnly
+                  disabled
                 />
                 {errors.projectCode && <p className="text-sm text-red-500">{errors.projectCode.message}</p>}
+                <p className="text-xs text-slate-500">Código generado automáticamente</p>
               </div>
             </div>
 
@@ -1402,6 +1437,7 @@ function ProjectInitiationForm() {
               <Button
                 type="submit"
                 disabled={isSubmitting || isGeneratingPdf || isSendingEmail || !isFormComplete()}
+                onClick={() => setIsSubmitButtonPressed(true)}
                 className="bg-red-600 hover:bg-red-700 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 {isSubmitting || isGeneratingPdf || isSendingEmail ? (
