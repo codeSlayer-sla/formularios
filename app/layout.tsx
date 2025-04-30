@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Acta de Inicio de Proyecto",
+  title: "Actas proyectos",
   description: "Formulario para la creación de actas de inicio de proyecto",
 }
 
