@@ -152,9 +152,14 @@ function ProjectClosureForm() {
     register,
     handleSubmit,
     control,
-    getValues,
+    watch,
+    setValue,
     formState: { errors },
   } = form
+
+  // subscribe to dates so UI re-renders immediately
+  const startDate = watch("startDate")
+  const endDate   = watch("endDate")
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -190,13 +195,13 @@ function ProjectClosureForm() {
       pdf.text("Documento Confidencial", pdf.internal.pageSize.getWidth() / 2, 290, {
         align: "center",
       })
-      pdf.save(`Cierre_${getValues("projectName")}.pdf`)
+      pdf.save(`Cierre_${form.getValues("projectName")}.pdf`)
     } catch {
       toast({ title: "Error", description: "No se pudo generar el PDF.", variant: "destructive" })
     } finally {
       setIsGeneratingPdf(false)
     }
-  }, [toast, getValues])
+  }, [toast, form])
 
   const onSubmit = useCallback(() => {
     setIsSubmitted(true)
@@ -205,11 +210,11 @@ function ProjectClosureForm() {
 
   const renderStepContent = useCallback(() => {
     switch (currentStep) {
+      // --- Step 0: Proyecto ---
       case 0:
         return (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
               <div>
                 <Label>Código del Proyecto</Label>
                 <Input {...register("projectCode")} />
@@ -223,16 +228,16 @@ function ProjectClosureForm() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full text-left">
                       <CalendarIcon className="inline mr-2" />
-                      {getValues("startDate")
-                        ? format(getValues("startDate")!, "PPP", { locale: es })
+                      {startDate
+                        ? format(startDate, "PPP", { locale: es })
                         : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent>
                     <Calendar
                       mode="single"
-                      selected={getValues("startDate")}
-                      onSelect={(d) => form.setValue("startDate", d!)}
+                      selected={startDate}
+                      onSelect={(d) => setValue("startDate", d!, { shouldValidate: true })}
                     />
                   </PopoverContent>
                 </Popover>
@@ -244,16 +249,16 @@ function ProjectClosureForm() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full text-left">
                       <CalendarIcon className="inline mr-2" />
-                      {getValues("endDate")
-                        ? format(getValues("endDate")!, "PPP", { locale: es })
+                      {endDate
+                        ? format(endDate, "PPP", { locale: es })
                         : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent>
                     <Calendar
                       mode="single"
-                      selected={getValues("endDate")}
-                      onSelect={(d) => form.setValue("endDate", d!)}
+                      selected={endDate}
+                      onSelect={(d) => setValue("endDate", d!, { shouldValidate: true })}
                     />
                   </PopoverContent>
                 </Popover>
@@ -286,11 +291,12 @@ function ProjectClosureForm() {
           </div>
         )
 
+      // --- Step 1: Equipo ---
       case 1:
         return (
           <div className="space-y-4">
             <div>
-              <Label>Patrozinador</Label>
+              <Label>Patrocinador</Label>
               <Input {...register("projectManager")} />
               {errors.projectManager && <p className="text-red-500">{errors.projectManager.message}</p>}
             </div>
@@ -302,36 +308,32 @@ function ProjectClosureForm() {
           </div>
         )
 
+      // --- Step 2: Entregables ---
       case 2:
         return (
           <div className="space-y-6">
-            
             <div>
               <Label>Comentarios</Label>
               <Textarea {...register("coment")} className="min-h-[120px]" />
-              {errors.scope && <p className="text-red-500">{errors.scope.message}</p>}
+              {errors.coment && <p className="text-red-500">{errors.coment.message}</p>}
             </div>
             <div>
               <Label>Entregables</Label>
               <Textarea {...register("deliverables")} className="min-h-[120px]" />
               {errors.deliverables && <p className="text-red-500">{errors.deliverables.message}</p>}
             </div>
-
             <div>
-              <Label>Cumplimiento de Entregables</Label>
+              <Label>Cumplimiento de Objetivos</Label>
               {fields.map((f, i) => (
                 <div key={f.id} className="flex gap-2 items-center">
-                  {/* Descripción sigue con register */}
                   <Input
                     {...register(`compliance.${i}.description` as const)}
                     placeholder="Descripción"
                   />
-
-                  {/* Estado como campo controlado */}
                   <Select
-                    value={getValues(`compliance.${i}.status`)}
+                    value={watch(`compliance.${i}.status` as const)}
                     onValueChange={(val) =>
-                      form.setValue(`compliance.${i}.status`, val, {
+                      setValue(`compliance.${i}.status`, val, {
                         shouldValidate: true,
                         shouldDirty: true,
                       })
@@ -346,18 +348,15 @@ function ProjectClosureForm() {
                       <SelectItem value="parcialmente cumplido">⚠ Parcialmente cumplido</SelectItem>
                     </SelectContent>
                   </Select>
-
                   <Button variant="outline" onClick={() => remove(i)}>
                     Eliminar
                   </Button>
                 </div>
               ))}
-              <br />
               <Button onClick={() => append({ description: "", status: "cumplido" })}>
-                + Agregar
+                + Agregar objetivo
               </Button>
             </div>
-
             <div>
               <Label>Cambios de Alcance</Label>
               <Textarea {...register("scopeChanges")} placeholder="Describe aquí..." />
@@ -365,6 +364,7 @@ function ProjectClosureForm() {
           </div>
         )
 
+      // --- Step 3: Aprobaciones ---
       case 3:
         return (
           <div className="space-y-4">
@@ -383,6 +383,7 @@ function ProjectClosureForm() {
           </div>
         )
 
+      // --- Step 4: Revisión / PDF ---
       case 4:
         return (
           <div className="space-y-6">
@@ -408,41 +409,39 @@ function ProjectClosureForm() {
               {/* Proyecto */}
               <div className="border-l-4 border-red-600 bg-slate-50 p-4 avoid-break">
                 <h4 className="font-medium mb-2">Información del Proyecto</h4>
-                <p><strong>Código:</strong> {getValues("projectCode")}</p>
+                <p><strong>Código:</strong> {watch("projectCode")}</p>
                 <p>
                   <strong>Fechas:</strong>{" "}
-                  {getValues("startDate") && format(getValues("startDate")!, "PPP", { locale: es })}{" "}
-                  –{" "}
-                  {getValues("endDate") && format(getValues("endDate")!, "PPP", { locale: es })}
+                  {startDate ? format(startDate, "PPP", { locale: es }) : "--"} –{" "}
+                  {endDate   ? format(endDate,   "PPP", { locale: es }) : "--"}
                 </p>
-                <p><strong>Tipo:</strong> {getValues("projectType")}</p>
+                <p><strong>Tipo:</strong> {watch("projectType")}</p>
               </div>
 
               {/* Equipo */}
               <div className="border-l-4 border-red-600 bg-slate-50 p-4 avoid-break">
                 <h4 className="font-medium mb-2">Equipo</h4>
-                <p><strong>Gerente:</strong> {getValues("projectManager")}</p>
-                <p><strong> Implementador:</strong> {getValues("teamMembers")}</p>
+                <p><strong>Gerente del proyecto:</strong> {watch("projectManager")}</p>
+                <p><strong>Implementador:</strong> {watch("teamMembers")}</p>
               </div>
 
-              {/* Objetivos & Alcance */}
+              {/* Comentarios & Entregables */}
               <div className="border-l-4 border-red-600 bg-slate-50 p-4 avoid-break">
                 <h4 className="font-medium mb-2">Entregables</h4>
-                
-                <p><strong>Comentarios:</strong> {getValues("coment")}</p>
-                <p><strong>Entregables:</strong> {getValues("deliverables")}</p>
+                <p><strong>Comentarios:</strong> {watch("coment")}</p>
+                <p><strong>Entregables:</strong> {watch("deliverables")}</p>
               </div>
 
               {/* Cumplimiento */}
               <div className="border-l-4 border-red-600 bg-slate-50 p-4 avoid-break">
                 <h4 className="font-medium mb-2">Cumplimiento de Objetivos</h4>
-                {getValues("compliance").map((c, i) => (
+                {watch("compliance").map((c, i) => (
                   <p key={i}>
                     {c.status === "cumplido"
-                      ? "✔ Entregado: "
+                      ? "✔ Cumplido: "
                       : c.status === "no cumplido"
-                      ? "✘ no entregado: "
-                      : "⚠ parcialmente entregado: "}{" "}
+                      ? "✘ No cumplido: "
+                      : "⚠ Parcialmente cumplido: "}
                     {c.description}
                   </p>
                 ))}
@@ -451,30 +450,29 @@ function ProjectClosureForm() {
               {/* Cambios de Alcance */}
               <div className="border-l-4 border-red-600 bg-slate-50 p-4 avoid-break">
                 <h4 className="font-medium mb-2">Cambios de Alcance</h4>
-                <p>{getValues("scopeChanges") || "No hubo cambios de alcance."}</p>
+                <p>{watch("scopeChanges") || "No hubo cambios de alcance."}</p>
               </div>
-              {/* Sección de firmas */}
+
+              {/* Firmas */}
               <div className="mt-8 pt-4 border-t border-dashed border-slate-300 pdf-section">
-                  <div className="flex justify-between">
-                    <div className="w-1/3 border-t border-slate-400 pt-2 text-center">
-                      <p className="text-sm font-bold">{form.getValues("approvalName") || "Nombre del Aprobador"}</p>
-                      <p className="text-xs text-slate-500">{form.getValues("approvalPosition") || "Cargo"}</p>
-                    </div>
-                    <div className="w-1/3 border-t border-slate-400 pt-2 text-center">
-                      <p className="text-sm font-bold">{form.getValues("projectManager") || "Gerente de Proyecto"}</p>
-                      <p className="text-xs text-slate-500">Gerente de Proyecto</p>
-                    </div>
+                <div className="flex justify-between">
+                  <div className="w-1/3 border-t border-slate-400 pt-2 text-center">
+                    <p className="text-sm font-bold">{watch("approvalName")}</p>
+                    <p className="text-xs text-slate-500">{watch("approvalPosition")}</p>
+                  </div>
+                  <div className="w-1/3 border-t border-slate-400 pt-2 text-center">
+                    <p className="text-sm font-bold">{watch("projectManager")}</p>
+                    <p className="text-xs text-slate-500">Gerente de Proyecto</p>
                   </div>
                 </div>
-              
-
-              
+              </div>
             </div>
+
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <h3 className="font-medium text-red-800 mb-2">Confirmación</h3>
               <p className="text-red-700 text-sm">
                 Al enviar este formulario, usted confirma que toda la información proporcionada es correcta y que está
-                autorizado para iniciar este proyecto.
+                autorizado para cerrar este proyecto.
               </p>
             </div>
           </div>
@@ -483,7 +481,7 @@ function ProjectClosureForm() {
       default:
         return null
     }
-  }, [currentStep, fields, errors, getValues, isGeneratingPdf])
+  }, [currentStep, fields, errors, startDate, endDate, generatePDF])
 
   if (isSubmitted) {
     return (
@@ -544,7 +542,6 @@ function ProjectClosureForm() {
                 Siguiente <ChevronRight />
               </Button>
             ) : null}
-
           </CardFooter>
         </Card>
       </form>
