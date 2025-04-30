@@ -23,31 +23,8 @@ export default function SelectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 text-gray-800 overflow-hidden">
-      {/* Partículas de fondo */}
-      <div className="absolute inset-0 z-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full opacity-70"
-            initial={{
-              x: Math.random() * 100 + "%",
-              y: Math.random() * 100 + "%",
-              opacity: Math.random() * 0.5 + 0.3,
-            }}
-            animate={{
-              y: [null, Math.random() * 100 + "%", Math.random() * 100 + "%"],
-              opacity: [null, Math.random() * 0.7 + 0.3, Math.random() * 0.5 + 0.3],
-            }}
-            transition={{
-              duration: Math.random() * 20 + 10,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-700 via-gray-500 to-gray-700 text-gray-800 overflow-hidden">
+      
       {/* Contenido principal */}
       <div className="relative z-10 container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen bg-blue:300">
         {/* Logo y título con animación */}
@@ -61,7 +38,7 @@ export default function SelectionPage() {
             <Image src="/images/logo.png" alt="Omicron Logo" width={220} height={80} className="h-auto" priority />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-red-300">
-            Sistema de Actas de Proyecto
+            Sistema de Proyectos 
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Seleccione el tipo de acta que desea generar para su proyecto
@@ -73,12 +50,16 @@ export default function SelectionPage() {
           <OptionCard
             title="Acta de Inicio"
             description="Genere un acta para formalizar el inicio de un nuevo proyecto y establecer sus parámetros iniciales."
-            icon={<FileText className="h-8 w-8" />}
+            icon={<FileCheck className="h-8 w-8" />}
             color="from-red-600 to-red-800"
             isSelected={selectedOption === "inicio"}
             onClick={() => handleSelection("inicio")}
             disabled={isTransitioning}
           />
+         
+          
+          
+          
 
           <OptionCard
             title="Acta de Cierre"
@@ -89,7 +70,19 @@ export default function SelectionPage() {
             onClick={() => handleSelection("cierre")}
             disabled={isTransitioning}
           />
+
+          
         </div>
+        <br/>
+        <OptionCard
+            title="Minuta"
+            description="Genere una minuta para documentar los acuerdos y decisiones tomadas durante la reunión."
+            icon={<FileText className="h-8 w-8" />}
+            color="from-green-600 to-green-800"
+            isSelected={selectedOption === "minuta"}
+            onClick={() => handleSelection("minuta")}
+            disabled={isTransitioning}
+          />
 
         
       </div>
