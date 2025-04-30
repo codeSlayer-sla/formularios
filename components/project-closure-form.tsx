@@ -539,7 +539,12 @@ function ProjectClosureForm() {
                 <ChevronLeft /> Anterior
               </Button>
             )}
-            
+            {currentStep < formSteps.length - 1 ? (
+              <Button onClick={nextStep}>
+                Siguiente <ChevronRight />
+              </Button>
+            ) : null}
+
           </CardFooter>
         </Card>
       </form>
