@@ -63,9 +63,7 @@ const formSchema = z.object({
   // Información del Proyecto
   projectName: z.string().min(3, { message: "El nombre del proyecto es requerido" }),
   projectCode: z.string().min(2, { message: "El código del proyecto es requerido" }),
-  startDate: z.date({ required_error: "La fecha de inicio es requerida" }),
-  endDate: z.date({ required_error: "La fecha de fin es requerida" }),
-  projectType: z.string({ required_error: "El tipo de proyecto es requerido" }),
+  
 
   // Información del Cliente
   clientName: z.string().min(3, { message: "El nombre del cliente es requerido" }),
@@ -463,22 +461,7 @@ function ProjectInitiationForm() {
     )
   }, [form])
 
-  // Función para generar el código del proyecto
-  const generateProjectCode = useCallback(() => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    return `PRJ-${year}${month}${day}-${random}`
-  }, [])
-
-  // Efecto para generar el código del proyecto al montar el componente
-  useEffect(() => {
-    const projectCode = generateProjectCode()
-    form.setValue("projectCode", projectCode)
-  }, [form, generateProjectCode])
-
+ 
   // Función para manejar el envío del formulario
   const onSubmit = useCallback(
     async (data: FormValues) => {
@@ -632,11 +615,9 @@ function ProjectInitiationForm() {
                     "transition-all duration-300 focus:border-red-300 focus:ring-red-200 bg-slate-50",
                     errors.projectCode ? "border-red-300 focus-visible:ring-red-500" : "border-slate-200",
                   )}
-                  readOnly
-                  disabled
+                  
                 />
                 {errors.projectCode && <p className="text-sm text-red-500">{errors.projectCode.message}</p>}
-                <p className="text-xs text-slate-500">Código generado automáticamente</p>
               </div>
             </div>
 
@@ -663,7 +644,7 @@ function ProjectInitiationForm() {
                       )}
                     </Button>
                   </PopoverTrigger>
-                  
+                  <GoHomeButton />
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
@@ -688,7 +669,7 @@ function ProjectInitiationForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="endDate" className="flex items-center gap-1">
-                  Fecha de Finalización estimada <span className="text-red-500">*</span>
+                  Fecha de Finalizacion <span className="text-red-500">*</span>
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -870,8 +851,7 @@ function ProjectInitiationForm() {
             </div>
           </div>
         )
-
-      case 3: // Objetivos y Alcance
+        case 3: // Objetivos y Alcance
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -923,6 +903,9 @@ function ProjectInitiationForm() {
             </div>
           </div>
         )
+       
+
+      
 
       case 4: // Solución
         return (
@@ -1037,9 +1020,9 @@ function ProjectInitiationForm() {
 
             <div className="pt-4">
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <h3 className="font-medium text-red-800 mb-2">Nota Importante</h3>
-                <p className="text-red-700 text-sm">
-                  Al firmar este documento, usted confirma que ha revisado y aprobado el acta de inicio del proyecto.
+                <h3 className="font-medium text-blue-800 mb-2">Nota Importante</h3>
+                <p className="text-blue-700 text-sm">
+                  Al firmar este documento, usted confirma que ha revisado y aprobado el acta de cierre del proyecto.
                   Esta aprobación autoriza el inicio formal del proyecto y el uso de los recursos asignados.
                 </p>
               </div>
@@ -1098,8 +1081,8 @@ function ProjectInitiationForm() {
                     className="h-auto"
                     priority
                   />
-                  <div className="bg-red-600 text-white px-4 py-2 rounded-md">
-                    <h2 className="text-lg font-bold">ACTA DE INICIO DE PROYECTO</h2>
+                  <div className="bg-blue-600 text-white px-4 py-2 rounded-md">
+                    <h2 className="text-lg font-bold">ACTA DE CIERRE DE PROYECTO</h2>
                   </div>
                 </div>
                 <div className="text-sm text-slate-500">{format(new Date(), "PPP", { locale: es })}</div>
@@ -1121,36 +1104,11 @@ function ProjectInitiationForm() {
                       <span className="font-medium">{form.getValues("projectCode") || "No especificado"}</span>
                     </div>
 
-                    <div className="flex">
-                      <span className="text-slate-500 w-[120px]">Fecha de Inicio:</span>
-                      <span className="font-medium">
-                        {form.getValues("startDate")
-                          ? format(form.getValues("startDate"), "PPP", { locale: es })
-                          : "No especificado"}
-                      </span>
-                    </div>
+                    
 
-                    <div className="flex">
-                      <span className="text-slate-500 w-[120px]">Fecha de Finalización:</span>
-                      <span className="font-medium">
-                        {form.getValues("endDate")
-                          ? format(form.getValues("endDate"), "PPP", { locale: es })
-                          : "No especificado"}
-                      </span>
-                    </div>
+                    
 
-                    <div className="flex">
-                      <span className="text-slate-500 w-[120px]">Tipo:</span>
-                      <span className="font-medium">
-                        {form.getValues("projectType") === "desarrollo" && "Desarrollo de Software"}
-                        {form.getValues("projectType") === "implementacion" && "Implementación"}
-                        {form.getValues("projectType") === "consultoria" && "Consultoría"}
-                        {form.getValues("projectType") === "infraestructura" && "Infraestructura"}
-                        {form.getValues("projectType") === "investigacion" && "Investigación"}
-                        {form.getValues("projectType") === "otro" && "Otro"}
-                        {!form.getValues("projectType") && "No especificado"}
-                      </span>
-                    </div>
+                    
                   </div>
                 </div>
 
@@ -1249,7 +1207,7 @@ function ProjectInitiationForm() {
                   <h4 className="text-sm font-medium text-red-700 mb-2 border-b border-slate-200 pb-1">Aprobación</h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex">
-                      <span className="text-slate-500 w-[120px]">Aprobador:</span>
+                      <span className="text-slate-500 w-[120px]">aprobador:</span>
                       <span className="font-medium">{form.getValues("approvalName") || "No especificado"}</span>
                     </div>
 
@@ -1301,7 +1259,7 @@ function ProjectInitiationForm() {
           ¡Acta de Inicio Enviada con Éxito!
         </CardTitle>
         <CardDescription className="text-white/90">
-          Su acta de inicio de proyecto ha sido registrada correctamente
+          Su acta de cierre  del proyecto ha sido registrada correctamente
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6 pb-4 text-center">
@@ -1352,7 +1310,7 @@ function ProjectInitiationForm() {
       <div className="flex justify-between items-center">
         <Image src="/images/logo.png" alt="Omicron Logo" width={180} height={60} className="h-auto" priority />
         <div className="text-right">
-          <h2 className="text-lg font-semibold text-slate-800">Acta de Inicio de Proyecto</h2>
+          <h2 className="text-lg font-semibold text-slate-800">Acta de cierre del  Proyecto</h2>
           <p className="text-sm text-slate-500">{formatDate(new Date())}</p>
         </div>
       </div>
@@ -1363,7 +1321,7 @@ function ProjectInitiationForm() {
           <h2 className="text-sm font-medium text-slate-700">Progreso del formulario</h2>
           <span className="text-sm text-slate-500">{Math.round(progress)}% completado</span>
         </div>
-        <Progress value={progress} className="h-2 bg-slate-200" indicatorClassName="bg-red-600" />
+        <Progress value={progress} className="h-2 bg-slate-200" indicatorClassName="bg-blue-600" />
 
         <div className="mt-4">
           <Tabs
