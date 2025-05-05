@@ -3,6 +3,8 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { AtencionButton } from "@/components/atencion-button"
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,6 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
+          <AtencionButton />
           <Toaster />
         </ThemeProvider>
       </body>

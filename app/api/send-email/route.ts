@@ -40,6 +40,8 @@ export async function POST(request: Request) {
       to: to_email,
       cc: "aplicaciones3@omicroncorp.com",
       subject: `Acta de Inicio - ${emailData.project_name}`,
+      replyTo: "josegabmuz507@gmail.com",
+  
       html: `
         <h2>Acta de Inicio de Proyecto</h2>
         <p>Estimado/a ${to_name},</p>
