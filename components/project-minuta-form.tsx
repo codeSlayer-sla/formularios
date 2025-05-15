@@ -389,17 +389,7 @@ function MinutesPage() {
               </div>
             </div>
 
-            {/* Firmas */}
-            <div className="mt-8 pt-4 border-t border-dashed border-slate-300 pdf-section">
-              <div className="flex justify-between">
-                <div className="w-1/2 border-t border-slate-400 pt-2 text-center">
-                  <p className="text-sm font-bold">Firma del Facilitador</p>
-                </div>
-                <div className="w-1/2 border-t border-slate-400 pt-2 text-center">
-                  <p className="text-sm font-bold">Firma del Participante</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
 
