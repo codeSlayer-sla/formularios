@@ -70,7 +70,7 @@ function MinutesPage() {
     try {
       const content = pdfContentRef.current
       const canvas = await html2canvas(content, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         logging: false,
         windowWidth: content.scrollWidth,
@@ -303,8 +303,8 @@ function MinutesPage() {
 
           <div className="space-y-4">
             {/* Información General */}
-            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
-              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+            <div className="bg-slate-50 rounded-md p-3 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-1 border-b border-slate-200 pb-1">
                 Información General
               </h4>
               <div className="space-y-1 text-sm">
@@ -328,16 +328,16 @@ function MinutesPage() {
             </div>
 
             {/* Objetivo */}
-            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
-              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+            <div className="bg-slate-50 rounded-md p-3 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-1 border-b border-slate-200 pb-1">
                 Objetivo
               </h4>
               <p className="text-sm">{objetivo || "No especificado"}</p>
             </div>
 
             {/* Temas */}
-            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
-              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+            <div className="bg-slate-50 rounded-md p-3 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-1 border-b border-slate-200 pb-1">
                 Temas Tratados
               </h4>
               <div className="space-y-4">
@@ -357,8 +357,8 @@ function MinutesPage() {
             </div>
 
             {/* Tareas */}
-            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
-              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+            <div className="bg-slate-50 rounded-md p-3 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-1 border-b border-slate-200 pb-1">
                 Tareas Asignadas
               </h4>
               <div className="space-y-2">
@@ -376,14 +376,14 @@ function MinutesPage() {
             </div>
 
             {/* Participantes */}
-            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
-              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+            <div className="bg-slate-50 rounded-md p-3 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-1 border-b border-slate-200 pb-1">
                 Participantes
               </h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 {participantes.map((participante, index) => (
                   participante && (
-                    <p key={index} className="text-sm">{participante}</p>
+                    <p key={index} className="text-xs py-0.5">{participante}</p>
                   )
                 ))}
               </div>
