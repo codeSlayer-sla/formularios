@@ -9,9 +9,26 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, FileText } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 export default dynamic(() => Promise.resolve(MinutesPage), { ssr: false })
+
+// Add page break styles
+const pageBreakStyles = `
+  @media print {
+    .page-break-before {
+      page-break-before: always;
+    }
+    .page-break-after {
+      page-break-after: always;
+    }
+    .avoid-break {
+      page-break-inside: avoid;
+    }
+  }
+`
 
 function MinutesPage() {
   const { toast } = useToast()
@@ -45,7 +62,10 @@ function MinutesPage() {
   const generatePDF = useCallback(async () => {
     if (!pdfContentRef.current) return
     setIsGenerating(true)
-    toast({ title: "Generando PDF", description: "Un momento por favor..." })
+    toast({
+      title: "Generando PDF",
+      description: "Por favor espere mientras se genera el documento...",
+    })
 
     try {
       const content = pdfContentRef.current
@@ -55,10 +75,17 @@ function MinutesPage() {
         logging: false,
         windowWidth: content.scrollWidth,
         windowHeight: content.scrollHeight,
+        imageTimeout: 0,
+        allowTaint: true,
       })
 
       const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      })
+
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       const imgWidth = pageWidth - 20
@@ -69,7 +96,14 @@ function MinutesPage() {
       pdf.setFillColor(248, 249, 250)
       pdf.rect(0, 0, pageWidth, pageHeight, "F")
 
-      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, finalImgHeight)
+      pdf.addImage(
+        imgData,
+        "PNG",
+        10,
+        10,
+        imgWidth,
+        finalImgHeight
+      )
 
       pdf.setFontSize(10)
       pdf.setTextColor(100, 100, 100)
@@ -77,38 +111,45 @@ function MinutesPage() {
         align: "center",
       })
 
-      const safeDate = fecha.replace(/-/g, "_") || new Date().toISOString().slice(0,10)
+      const safeDate = fecha.replace(/-/g, "_") || format(new Date(), "yyyy-MM-dd")
       pdf.save(`Minuta_${safeDate}.pdf`)
 
-      toast({ title: "PDF generado", description: "Listo.", variant: "success" })
-    } catch (e) {
-      console.error(e)
-      toast({ title: "Error", description: "No se pudo generar el PDF.", variant: "destructive" })
+      toast({
+        title: "PDF generado con éxito",
+        description: "El documento ha sido descargado correctamente.",
+        variant: "success",
+      })
+    } catch (error) {
+      console.error("Error al generar PDF:", error)
+      toast({
+        title: "Error al generar PDF",
+        description: "Ha ocurrido un error al generar el documento. Intente nuevamente.",
+        variant: "destructive",
+      })
     } finally {
       setIsGenerating(false)
     }
   }, [toast, fecha])
 
   return (
-
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6 space-y-6">
       <div className="flex items-center gap-4">
-                        <Image
-                          src="/images/logo.png"
-                          alt="Omicron Logo"
-                          width={150}
-                          height={50}
-                          className="h-auto"
-                          priority
-                        />
-                        <div className="bg-green-600 text-white px-4 py-2 rounded-md">
-                          <h2 className="text-lg font-bold">MINUTA</h2>
-                        </div>
-                      </div>
-      
-      
-      <div className="w-full max-w-4xl bg-white rounded shadow" ref={pdfContentRef}>
-        <div className="p-6 space-y-6 text-gray-800">
+        <Image
+          src="/images/logo.png"
+          alt="Omicron Logo"
+          width={150}
+          height={50}
+          className="h-auto"
+          priority
+        />
+        <div className="bg-green-600 text-white px-4 py-2 rounded-md">
+          <h2 className="text-lg font-bold">MINUTA</h2>
+        </div>
+      </div>
+
+      <div className="w-full max-w-4xl">
+        {/* Form content */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           {/* Datos generales */}
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -237,13 +278,149 @@ function MinutesPage() {
           </div>
         </div>
 
-        {/* Botón descargar */}
-        <br />
-        <div className="p-4 text-right">
-          <Button onClick={generatePDF} disabled={isGenerating}>
-            {isGenerating
-              ? <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Generando PDF...</>
-              : "Descargar PDF"}
+        {/* PDF Preview */}
+        <div 
+          ref={pdfContentRef}
+          className="bg-white p-6 rounded-md border border-slate-200 shadow-sm"
+          data-pdf-content="true"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/images/logo.png"
+                alt="Omicron Logo"
+                width={150}
+                height={50}
+                className="h-auto"
+                priority
+              />
+              <div className="bg-green-600 text-white px-4 py-2 rounded-md">
+                <h2 className="text-lg font-bold">MINUTA</h2>
+              </div>
+            </div>
+            <div className="text-sm text-slate-500">{format(new Date(), "PPP", { locale: es })}</div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Información General */}
+            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+                Información General
+              </h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex">
+                  <span className="text-slate-500 w-[120px]">Lugar:</span>
+                  <span className="font-medium">{lugar || "No especificado"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-slate-500 w-[120px]">Fecha:</span>
+                  <span className="font-medium">{fecha || "No especificada"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-slate-500 w-[120px]">Hora Inicio:</span>
+                  <span className="font-medium">{horaInicio || "No especificada"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-slate-500 w-[120px]">Hora Fin:</span>
+                  <span className="font-medium">{horaFin || "No especificada"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Objetivo */}
+            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+                Objetivo
+              </h4>
+              <p className="text-sm">{objetivo || "No especificado"}</p>
+            </div>
+
+            {/* Temas */}
+            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+                Temas Tratados
+              </h4>
+              <div className="space-y-4">
+                {[
+                  { tema: tema1, desc: desc1 },
+                  { tema: tema2, desc: desc2 },
+                  { tema: tema3, desc: desc3 }
+                ].map((item, index) => (
+                  item.tema && (
+                    <div key={index} className="space-y-1">
+                      <p className="font-medium text-sm">{item.tema}</p>
+                      <p className="text-sm text-slate-600">{item.desc}</p>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+
+            {/* Tareas */}
+            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+                Tareas Asignadas
+              </h4>
+              <div className="space-y-2">
+                {tareas.map((tarea, index) => (
+                  tarea.ref && (
+                    <div key={index} className="grid grid-cols-4 gap-2 text-sm">
+                      <div className="col-span-1">{tarea.ref}</div>
+                      <div className="col-span-1">{tarea.resp}</div>
+                      <div className="col-span-1">{tarea.fecha}</div>
+                      <div className="col-span-1">{tarea.coment}</div>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+
+            {/* Participantes */}
+            <div className="bg-slate-50 rounded-md p-4 border-l-4 border-green-600 avoid-break pdf-section">
+              <h4 className="text-sm font-medium text-green-700 mb-2 border-b border-slate-200 pb-1">
+                Participantes
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {participantes.map((participante, index) => (
+                  participante && (
+                    <p key={index} className="text-sm">{participante}</p>
+                  )
+                ))}
+              </div>
+            </div>
+
+            {/* Firmas */}
+            <div className="mt-8 pt-4 border-t border-dashed border-slate-300 pdf-section">
+              <div className="flex justify-between">
+                <div className="w-1/2 border-t border-slate-400 pt-2 text-center">
+                  <p className="text-sm font-bold">Firma del Facilitador</p>
+                </div>
+                <div className="w-1/2 border-t border-slate-400 pt-2 text-center">
+                  <p className="text-sm font-bold">Firma del Participante</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Download Button */}
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={generatePDF}
+            disabled={isGenerating}
+            className="bg-green-600 hover:bg-green-700 flex items-center gap-2 shadow-lg transition-all duration-300 hover:shadow-green-200"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generando PDF...
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4" />
+                Descargar Minuta
+              </>
+            )}
           </Button>
         </div>
       </div>
